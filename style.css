@@ -119,6 +119,44 @@ header p {
     background: #c0392b;
 }
 
+.btn-action {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    font-size: 20px;
+    font-weight: bold;
+    line-height: 1;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.btn-increment {
+    background: #27ae60;
+    color: white;
+}
+
+.btn-increment:hover {
+    background: #229954;
+    transform: scale(1.1);
+}
+
+.btn-decrement {
+    background: #e74c3c;
+    color: white;
+}
+
+.btn-decrement:hover {
+    background: #c0392b;
+    transform: scale(1.1);
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    align-items: center;
+}
+
 .inventory-section {
     background: white;
     padding: 0;

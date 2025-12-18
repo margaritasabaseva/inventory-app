@@ -191,6 +191,32 @@ class InventoryManager {
         }
     }
 
+    // Increment item quantity
+    incrementQuantity(id) {
+        const item = this.items.find(item => item.id === id);
+        if (item) {
+            item.quantity++;
+            this.saveItems();
+            this.displayItems();
+            this.showNotification('Quantity increased!', 'success');
+        }
+    }
+
+    // Decrement item quantity or remove if zero
+    decrementQuantity(id) {
+        const item = this.items.find(item => item.id === id);
+        if (item) {
+            if (item.quantity > 1) {
+                item.quantity--;
+                this.saveItems();
+                this.displayItems();
+                this.showNotification('Quantity decreased!', 'success');
+            } else {
+                this.removeItem(id);
+            }
+        }
+    }
+
     // Display items with filtering
     displayItems() {
         const searchTerm = document.getElementById('searchInput').value.toLowerCase();
@@ -267,14 +293,19 @@ class InventoryManager {
                 <td><span class="table-item-name">${this.escapeHtml(item.name)}</span></td>
                 <td><span class="table-category">${this.escapeHtml(item.category)}</span></td>
                 <td>${this.escapeHtml(item.location)}</td>
-                <td style="text-align: center;">${item.quantity}</td>
                 <td><span class="table-barcode">${item.barcode ? this.escapeHtml(item.barcode) : '-'}</span></td>
                 <td><div class="table-notes" title="${this.escapeHtml(item.notes)}">${item.notes ? this.escapeHtml(item.notes) : '-'}</div></td>
                 <td style="white-space: nowrap;">${this.formatDate(item.dateAdded)}</td>
+                <td style="text-align: center;">${item.quantity}</td>
                 <td>
-                    <button class="btn btn-danger" onclick="inventoryApp.removeItem('${item.id}')">
-                        Remove
-                    </button>
+                    <div class="action-buttons">
+                        <button class="btn btn-action btn-increment" onclick="inventoryApp.incrementQuantity('${item.id}')" title="Increase quantity">
+                            +
+                        </button>
+                        <button class="btn btn-action btn-decrement" onclick="inventoryApp.decrementQuantity('${item.id}')" title="Decrease quantity">
+                            −
+                        </button>
+                    </div>
                 </td>
             </tr>
         `).join('');
