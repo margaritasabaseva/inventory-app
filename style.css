@@ -121,18 +121,21 @@ header p {
 
 .inventory-section {
     background: white;
-    padding: 30px;
+    padding: 0;
     border-radius: 10px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
 }
 
 .section-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 0;
+    padding: 20px 30px;
     flex-wrap: wrap;
     gap: 20px;
+    border-bottom: 2px solid #e0e0e0;
 }
 
 .section-header h2 {
@@ -159,18 +162,16 @@ header p {
 
 .item-count {
     background: #f8f9fa;
-    padding: 10px 15px;
-    border-radius: 5px;
-    margin-bottom: 20px;
+    padding: 15px 30px;
+    margin-bottom: 0;
     font-weight: 600;
     color: #555;
+    border-bottom: 1px solid #e0e0e0;
 }
 
 .table-container {
     overflow-x: auto;
     background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .inventory-table {
@@ -179,7 +180,7 @@ header p {
     font-size: 0.95em;
     min-width: 900px;
 }
-
+100%
 .inventory-table thead {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
