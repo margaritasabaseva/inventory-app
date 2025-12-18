@@ -2,6 +2,8 @@
 class InventoryManager {
     constructor() {
         this.items = this.loadItems();
+        this.sortColumn = null;
+        this.sortDirection = 'asc';
         this.initializeEventListeners();
         this.displayItems();
     }
@@ -125,6 +127,14 @@ class InventoryManager {
 
         searchInput.addEventListener('input', () => this.displayItems());
         filterCategory.addEventListener('change', () => this.displayItems());
+
+        // Add sorting event listeners to table headers
+        document.querySelectorAll('.sortable').forEach(header => {
+            header.addEventListener('click', () => {
+                const sortKey = header.getAttribute('data-sort');
+                this.sortItems(sortKey);
+            });
+        });
     }
 
     // Add new item
@@ -145,6 +155,30 @@ class InventoryManager {
         this.displayItems();
         this.resetForm();
         this.showNotification('Item added successfully!', 'success');
+    }
+
+    // Sort items by column
+    sortItems(column) {
+        // Toggle sort direction if clicking the same column
+        if (this.sortColumn === column) {
+            this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            this.sortColumn = column;
+            this.sortDirection = 'asc';
+        }
+
+        this.displayItems();
+        this.updateSortIndicators();
+    }
+
+    // Update sort direction indicators
+    updateSortIndicators() {
+        document.querySelectorAll('.sortable').forEach(header => {
+            header.classList.remove('sorted-asc', 'sorted-desc');
+            if (header.getAttribute('data-sort') === this.sortColumn) {
+                header.classList.add(this.sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc');
+            }
+        });
     }
 
     // Remove item
@@ -180,6 +214,34 @@ class InventoryManager {
             );
         }
 
+        // Apply sorting
+        if (this.sortColumn) {
+            filteredItems.sort((a, b) => {
+                let aVal = a[this.sortColumn];
+                let bVal = b[this.sortColumn];
+
+                // Handle quantity as number
+                if (this.sortColumn === 'quantity') {
+                    aVal = parseInt(aVal);
+                    bVal = parseInt(bVal);
+                }
+                // Handle dates
+                else if (this.sortColumn === 'dateAdded') {
+                    aVal = new Date(aVal);
+                    bVal = new Date(bVal);
+                }
+                // Handle strings (case-insensitive)
+                else {
+                    aVal = (aVal || '').toString().toLowerCase();
+                    bVal = (bVal || '').toString().toLowerCase();
+                }
+
+                if (aVal < bVal) return this.sortDirection === 'asc' ? -1 : 1;
+                if (aVal > bVal) return this.sortDirection === 'asc' ? 1 : -1;
+                return 0;
+            });
+        }
+
         this.renderItems(filteredItems);
         this.updateItemCount(filteredItems.length, this.items.length);
     }
@@ -190,51 +252,31 @@ class InventoryManager {
 
         if (items.length === 0) {
             inventoryList.innerHTML = `
-                <div class="empty-state">
-                    <h3>No items found</h3>
-                    <p>Start by adding your first inventory item above!</p>
-                </div>
+                <tr>
+                    <td colspan="8" style="text-align: center; padding: 40px; color: #999;">
+                        <h3 style="margin-bottom: 10px;">No items found</h3>
+                        <p>Start by adding your first inventory item above!</p>
+                    </td>
+                </tr>
             `;
             return;
         }
 
         inventoryList.innerHTML = items.map(item => `
-            <div class="inventory-item">
-                <div class="item-header">
-                    <div>
-                        <div class="item-name">${this.escapeHtml(item.name)}</div>
-                        <span class="item-category">${this.escapeHtml(item.category)}</span>
-                    </div>
-                </div>
-                <div class="item-details">
-                    <div class="item-detail">
-                        <strong>Location:</strong>
-                        <span>${this.escapeHtml(item.location)}</span>
-                    </div>
-                    <div class="item-detail">
-                        <strong>Quantity:</strong>
-                        <span>${item.quantity}</span>
-                    </div>
-                    ${item.barcode ? `
-                        <div class="item-detail">
-                            <strong>Barcode:</strong>
-                            <span>${this.escapeHtml(item.barcode)}</span>
-                        </div>
-                    ` : ''}
-                    <div class="item-detail">
-                        <strong>Added:</strong>
-                        <span>${this.formatDate(item.dateAdded)}</span>
-                    </div>
-                </div>
-                ${item.notes ? `
-                    <div class="item-notes">
-                        <strong>Notes:</strong> ${this.escapeHtml(item.notes)}
-                    </div>
-                ` : ''}
-                <button class="btn btn-danger" onclick="inventoryApp.removeItem('${item.id}')">
-                    Remove Item
-                </button>
-            </div>
+            <tr>
+                <td><span class="table-item-name">${this.escapeHtml(item.name)}</span></td>
+                <td><span class="table-category">${this.escapeHtml(item.category)}</span></td>
+                <td>${this.escapeHtml(item.location)}</td>
+                <td style="text-align: center;">${item.quantity}</td>
+                <td><span class="table-barcode">${item.barcode ? this.escapeHtml(item.barcode) : '-'}</span></td>
+                <td><div class="table-notes" title="${this.escapeHtml(item.notes)}">${item.notes ? this.escapeHtml(item.notes) : '-'}</div></td>
+                <td style="white-space: nowrap;">${this.formatDate(item.dateAdded)}</td>
+                <td>
+                    <button class="btn btn-danger" onclick="inventoryApp.removeItem('${item.id}')">
+                        Remove
+                    </button>
+                </td>
+            </tr>
         `).join('');
     }
 
