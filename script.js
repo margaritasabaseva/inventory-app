@@ -4,6 +4,7 @@ class InventoryManager {
         this.items = this.loadItems();
         this.sortColumn = null;
         this.sortDirection = 'asc';
+        this.editingItemId = null;
         this.initializeEventListeners();
         this.displayItems();
     }
@@ -137,24 +138,40 @@ class InventoryManager {
         });
     }
 
-    // Add new item
+    // Add new item or update existing
     addItem() {
-        const item = {
-            id: Date.now().toString(),
-            name: document.getElementById('itemName').value.trim(),
-            category: document.getElementById('category').value,
-            location: document.getElementById('location').value.trim(),
-            quantity: parseInt(document.getElementById('quantity').value),
-            barcode: document.getElementById('barcode').value.trim(),
-            notes: document.getElementById('notes').value.trim(),
-            dateAdded: new Date().toISOString()
-        };
+        if (this.editingItemId) {
+            // Update existing item
+            const item = this.items.find(i => i.id === this.editingItemId);
+            if (item) {
+                item.name = document.getElementById('itemName').value.trim();
+                item.category = document.getElementById('category').value;
+                item.location = document.getElementById('location').value;
+                item.quantity = parseInt(document.getElementById('quantity').value);
+                item.barcode = document.getElementById('barcode').value.trim();
+                item.notes = document.getElementById('notes').value.trim();
+            }
+            this.showNotification('Item updated successfully!', 'success');
+            this.editingItemId = null;
+        } else {
+            // Add new item
+            const item = {
+                id: Date.now().toString(),
+                name: document.getElementById('itemName').value.trim(),
+                category: document.getElementById('category').value,
+                location: document.getElementById('location').value,
+                quantity: parseInt(document.getElementById('quantity').value),
+                barcode: document.getElementById('barcode').value.trim(),
+                notes: document.getElementById('notes').value.trim(),
+                dateAdded: new Date().toISOString()
+            };
+            this.items.push(item);
+            this.showNotification('Item added successfully!', 'success');
+        }
 
-        this.items.push(item);
         this.saveItems();
         this.displayItems();
         this.resetForm();
-        this.showNotification('Item added successfully!', 'success');
     }
 
     // Sort items by column
@@ -183,12 +200,10 @@ class InventoryManager {
 
     // Remove item
     removeItem(id) {
-        if (confirm('Are you sure you want to remove this item?')) {
-            this.items = this.items.filter(item => item.id !== id);
-            this.saveItems();
-            this.displayItems();
-            this.showNotification('Item removed successfully!', 'success');
-        }
+        this.items = this.items.filter(item => item.id !== id);
+        this.saveItems();
+        this.displayItems();
+        this.showNotification('Item removed successfully!', 'success');
     }
 
     // Increment item quantity
@@ -198,22 +213,38 @@ class InventoryManager {
             item.quantity++;
             this.saveItems();
             this.displayItems();
-            this.showNotification('Quantity increased!', 'success');
         }
     }
 
-    // Decrement item quantity or remove if zero
+    // Decrement item quantity or set to zero
     decrementQuantity(id) {
         const item = this.items.find(item => item.id === id);
+        if (item && item.quantity > 0) {
+            item.quantity--;
+            this.saveItems();
+            this.displayItems();
+        }
+    }
+
+    // Edit item
+    editItem(id) {
+        const item = this.items.find(item => item.id === id);
         if (item) {
-            if (item.quantity > 1) {
-                item.quantity--;
-                this.saveItems();
-                this.displayItems();
-                this.showNotification('Quantity decreased!', 'success');
-            } else {
-                this.removeItem(id);
-            }
+            this.editingItemId = id;
+            document.getElementById('itemName').value = item.name;
+            document.getElementById('category').value = item.category;
+            document.getElementById('location').value = item.location;
+            document.getElementById('quantity').value = item.quantity;
+            document.getElementById('barcode').value = item.barcode || '';
+            document.getElementById('notes').value = item.notes || '';
+            
+            // Update button text and scroll to form
+            const submitBtn = document.querySelector('.btn-primary');
+            submitBtn.textContent = 'Update Item';
+            submitBtn.style.background = '#f39c12';
+            
+            // Scroll to form
+            document.querySelector('.add-item-section').scrollIntoView({ behavior: 'smooth' });
         }
     }
 
@@ -268,6 +299,13 @@ class InventoryManager {
             });
         }
 
+        // Move items with quantity 0 to the bottom
+        filteredItems.sort((a, b) => {
+            if (a.quantity === 0 && b.quantity > 0) return 1;
+            if (a.quantity > 0 && b.quantity === 0) return -1;
+            return 0;
+        });
+
         this.renderItems(filteredItems);
         this.updateItemCount(filteredItems.length, this.items.length);
     }
@@ -289,7 +327,7 @@ class InventoryManager {
         }
 
         inventoryList.innerHTML = items.map(item => `
-            <tr>
+            <tr class="${item.quantity === 0 ? 'zero-quantity' : ''}" onclick="inventoryApp.editItem('${item.id}')" style="cursor: pointer;">
                 <td><span class="table-item-name">${this.escapeHtml(item.name)}</span></td>
                 <td><span class="table-category">${this.escapeHtml(item.category)}</span></td>
                 <td>${this.escapeHtml(item.location)}</td>
@@ -297,12 +335,12 @@ class InventoryManager {
                 <td><div class="table-notes" title="${this.escapeHtml(item.notes)}">${item.notes ? this.escapeHtml(item.notes) : '-'}</div></td>
                 <td style="white-space: nowrap;">${this.formatDate(item.dateAdded)}</td>
                 <td style="text-align: center;">${item.quantity}</td>
-                <td>
+                <td onclick="event.stopPropagation();">
                     <div class="action-buttons">
                         <button class="btn btn-action btn-increment" onclick="inventoryApp.incrementQuantity('${item.id}')" title="Increase quantity">
                             +
                         </button>
-                        <button class="btn btn-action btn-decrement" onclick="inventoryApp.decrementQuantity('${item.id}')" title="Decrease quantity">
+                        <button class="btn btn-action btn-decrement" onclick="inventoryApp.decrementQuantity('${item.id}')" title="Decrease quantity" ${item.quantity === 0 ? 'disabled' : ''}>
                             −
                         </button>
                     </div>
@@ -324,6 +362,10 @@ class InventoryManager {
     // Reset form after adding item
     resetForm() {
         document.getElementById('addItemForm').reset();
+        this.editingItemId = null;
+        const submitBtn = document.querySelector('.btn-primary');
+        submitBtn.textContent = 'Add Item';
+        submitBtn.style.background = '';
     }
 
     // Format date for display
