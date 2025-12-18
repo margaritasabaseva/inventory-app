@@ -120,10 +120,15 @@ class InventoryManager {
         const form = document.getElementById('addItemForm');
         const searchInput = document.getElementById('searchInput');
         const filterCategory = document.getElementById('filterCategory');
+        const cancelBtn = document.getElementById('cancelBtn');
 
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             this.addItem();
+        });
+
+        cancelBtn.addEventListener('click', () => {
+            this.resetForm();
         });
 
         searchInput.addEventListener('input', () => this.displayItems());
@@ -238,10 +243,12 @@ class InventoryManager {
             document.getElementById('barcode').value = item.barcode || '';
             document.getElementById('notes').value = item.notes || '';
             
-            // Update button text and scroll to form
+            // Update button text and show cancel button
             const submitBtn = document.querySelector('.btn-primary');
+            const cancelBtn = document.getElementById('cancelBtn');
             submitBtn.textContent = 'Update Item';
             submitBtn.style.background = '#f39c12';
+            cancelBtn.style.display = 'inline-block';
             
             // Scroll to form
             document.querySelector('.add-item-section').scrollIntoView({ behavior: 'smooth' });
@@ -364,8 +371,10 @@ class InventoryManager {
         document.getElementById('addItemForm').reset();
         this.editingItemId = null;
         const submitBtn = document.querySelector('.btn-primary');
+        const cancelBtn = document.getElementById('cancelBtn');
         submitBtn.textContent = 'Add Item';
         submitBtn.style.background = '';
+        cancelBtn.style.display = 'none';
     }
 
     // Format date for display

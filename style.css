@@ -88,6 +88,12 @@ header p {
     border-color: #667eea;
 }
 
+.form-buttons {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
 .btn {
     padding: 12px 30px;
     border: none;
@@ -106,6 +112,16 @@ header p {
 .btn-primary:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary {
+    background: #95a5a6;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #7f8c8d;
+    transform: translateY(-2px);
 }
 
 .btn-danger {
