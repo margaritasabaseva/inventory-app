@@ -2,8 +2,27 @@
 class InventoryManager {
     constructor() {
         this.items = this.loadItems();
+        this.sortColumn = null;
+        this.sortDirection = 'asc';
+        this.editingItemId = null;
+        this.initializeCollapse();
         this.initializeEventListeners();
         this.displayItems();
+    }
+
+    // Initialize collapse functionality
+    initializeCollapse() {
+        const collapseBtn = document.getElementById('collapseBtn');
+        const collapsibleContent = document.querySelector('.collapsible-content');
+        
+        collapseBtn.addEventListener('click', () => {
+            collapseBtn.classList.toggle('collapsed');
+            collapsibleContent.classList.toggle('collapsed');
+            
+            // Update aria-label for accessibility
+            const isCollapsed = collapseBtn.classList.contains('collapsed');
+            collapseBtn.setAttribute('aria-label', isCollapsed ? 'Expand section' : 'Collapse section');
+        });
     }
 
     // Load items from localStorage
@@ -117,43 +136,148 @@ class InventoryManager {
         const form = document.getElementById('addItemForm');
         const searchInput = document.getElementById('searchInput');
         const filterCategory = document.getElementById('filterCategory');
+        const cancelBtn = document.getElementById('cancelBtn');
 
         form.addEventListener('submit', (e) => {
             e.preventDefault();
             this.addItem();
         });
 
+        cancelBtn.addEventListener('click', () => {
+            this.resetForm();
+        });
+
         searchInput.addEventListener('input', () => this.displayItems());
         filterCategory.addEventListener('change', () => this.displayItems());
+
+        // Add sorting event listeners to table headers
+        document.querySelectorAll('.sortable').forEach(header => {
+            header.addEventListener('click', () => {
+                const sortKey = header.getAttribute('data-sort');
+                this.sortItems(sortKey);
+            });
+        });
     }
 
-    // Add new item
+    // Add new item or update existing
     addItem() {
-        const item = {
-            id: Date.now().toString(),
-            name: document.getElementById('itemName').value.trim(),
-            category: document.getElementById('category').value,
-            location: document.getElementById('location').value.trim(),
-            quantity: parseInt(document.getElementById('quantity').value),
-            barcode: document.getElementById('barcode').value.trim(),
-            notes: document.getElementById('notes').value.trim(),
-            dateAdded: new Date().toISOString()
-        };
+        if (this.editingItemId) {
+            // Update existing item
+            const item = this.items.find(i => i.id === this.editingItemId);
+            if (item) {
+                item.name = document.getElementById('itemName').value.trim();
+                item.category = document.getElementById('category').value;
+                item.location = document.getElementById('location').value;
+                item.quantity = parseInt(document.getElementById('quantity').value);
+                item.barcode = document.getElementById('barcode').value.trim();
+                item.notes = document.getElementById('notes').value.trim();
+            }
+            this.showNotification('Item updated successfully!', 'success');
+            this.editingItemId = null;
+        } else {
+            // Add new item
+            const item = {
+                id: Date.now().toString(),
+                name: document.getElementById('itemName').value.trim(),
+                category: document.getElementById('category').value,
+                location: document.getElementById('location').value,
+                quantity: parseInt(document.getElementById('quantity').value),
+                barcode: document.getElementById('barcode').value.trim(),
+                notes: document.getElementById('notes').value.trim(),
+                dateAdded: new Date().toISOString()
+            };
+            this.items.push(item);
+            this.showNotification('Item added successfully!', 'success');
+        }
 
-        this.items.push(item);
         this.saveItems();
         this.displayItems();
         this.resetForm();
-        this.showNotification('Item added successfully!', 'success');
+    }
+
+    // Sort items by column
+    sortItems(column) {
+        // Toggle sort direction if clicking the same column
+        if (this.sortColumn === column) {
+            this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            this.sortColumn = column;
+            this.sortDirection = 'asc';
+        }
+
+        this.displayItems();
+        this.updateSortIndicators();
+    }
+
+    // Update sort direction indicators
+    updateSortIndicators() {
+        document.querySelectorAll('.sortable').forEach(header => {
+            header.classList.remove('sorted-asc', 'sorted-desc');
+            if (header.getAttribute('data-sort') === this.sortColumn) {
+                header.classList.add(this.sortDirection === 'asc' ? 'sorted-asc' : 'sorted-desc');
+            }
+        });
     }
 
     // Remove item
     removeItem(id) {
-        if (confirm('Are you sure you want to remove this item?')) {
-            this.items = this.items.filter(item => item.id !== id);
+        this.items = this.items.filter(item => item.id !== id);
+        this.saveItems();
+        this.displayItems();
+        this.showNotification('Item removed successfully!', 'success');
+    }
+
+    // Increment item quantity
+    incrementQuantity(id) {
+        const item = this.items.find(item => item.id === id);
+        if (item) {
+            item.quantity++;
             this.saveItems();
             this.displayItems();
-            this.showNotification('Item removed successfully!', 'success');
+        }
+    }
+
+    // Decrement item quantity or set to zero
+    decrementQuantity(id) {
+        const item = this.items.find(item => item.id === id);
+        if (item && item.quantity > 0) {
+            item.quantity--;
+            this.saveItems();
+            this.displayItems();
+        }
+    }
+
+    // Edit item
+    editItem(id) {
+        const item = this.items.find(item => item.id === id);
+        if (item) {
+            // Expand the form section if it's collapsed
+            const collapseBtn = document.getElementById('collapseBtn');
+            const collapsibleContent = document.querySelector('.collapsible-content');
+            
+            if (collapsibleContent.classList.contains('collapsed')) {
+                collapseBtn.classList.remove('collapsed');
+                collapsibleContent.classList.remove('collapsed');
+                collapseBtn.setAttribute('aria-label', 'Collapse section');
+            }
+            
+            this.editingItemId = id;
+            document.getElementById('itemName').value = item.name;
+            document.getElementById('category').value = item.category;
+            document.getElementById('location').value = item.location;
+            document.getElementById('quantity').value = item.quantity;
+            document.getElementById('barcode').value = item.barcode || '';
+            document.getElementById('notes').value = item.notes || '';
+            
+            // Update button text and show cancel button
+            const submitBtn = document.querySelector('.btn-primary');
+            const cancelBtn = document.getElementById('cancelBtn');
+            submitBtn.textContent = 'Update Item';
+            submitBtn.style.background = '#f39c12';
+            cancelBtn.style.display = 'inline-block';
+            
+            // Scroll to form
+            document.querySelector('.add-item-section').scrollIntoView({ behavior: 'smooth' });
         }
     }
 
@@ -180,6 +304,41 @@ class InventoryManager {
             );
         }
 
+        // Apply sorting
+        if (this.sortColumn) {
+            filteredItems.sort((a, b) => {
+                let aVal = a[this.sortColumn];
+                let bVal = b[this.sortColumn];
+
+                // Handle quantity as number
+                if (this.sortColumn === 'quantity') {
+                    aVal = parseInt(aVal);
+                    bVal = parseInt(bVal);
+                }
+                // Handle dates
+                else if (this.sortColumn === 'dateAdded') {
+                    aVal = new Date(aVal);
+                    bVal = new Date(bVal);
+                }
+                // Handle strings (case-insensitive)
+                else {
+                    aVal = (aVal || '').toString().toLowerCase();
+                    bVal = (bVal || '').toString().toLowerCase();
+                }
+
+                if (aVal < bVal) return this.sortDirection === 'asc' ? -1 : 1;
+                if (aVal > bVal) return this.sortDirection === 'asc' ? 1 : -1;
+                return 0;
+            });
+        }
+
+        // Move items with quantity 0 to the bottom
+        filteredItems.sort((a, b) => {
+            if (a.quantity === 0 && b.quantity > 0) return 1;
+            if (a.quantity > 0 && b.quantity === 0) return -1;
+            return 0;
+        });
+
         this.renderItems(filteredItems);
         this.updateItemCount(filteredItems.length, this.items.length);
     }
@@ -190,51 +349,36 @@ class InventoryManager {
 
         if (items.length === 0) {
             inventoryList.innerHTML = `
-                <div class="empty-state">
-                    <h3>No items found</h3>
-                    <p>Start by adding your first inventory item above!</p>
-                </div>
+                <tr>
+                    <td colspan="8" style="text-align: center; padding: 40px; color: #999;">
+                        <h3 style="margin-bottom: 10px;">No items found</h3>
+                        <p>Start by adding your first inventory item above!</p>
+                    </td>
+                </tr>
             `;
             return;
         }
 
         inventoryList.innerHTML = items.map(item => `
-            <div class="inventory-item">
-                <div class="item-header">
-                    <div>
-                        <div class="item-name">${this.escapeHtml(item.name)}</div>
-                        <span class="item-category">${this.escapeHtml(item.category)}</span>
+            <tr class="${item.quantity === 0 ? 'zero-quantity' : ''}" onclick="inventoryApp.editItem('${item.id}')" style="cursor: pointer;">
+                <td><span class="table-item-name">${this.escapeHtml(item.name)}</span></td>
+                <td><span class="table-category">${this.escapeHtml(item.category)}</span></td>
+                <td>${this.escapeHtml(item.location)}</td>
+                <td><span class="table-barcode">${item.barcode ? this.escapeHtml(item.barcode) : '-'}</span></td>
+                <td><div class="table-notes" title="${this.escapeHtml(item.notes)}">${item.notes ? this.escapeHtml(item.notes) : '-'}</div></td>
+                <td style="white-space: nowrap;">${this.formatDate(item.dateAdded)}</td>
+                <td style="text-align: center;">${item.quantity}</td>
+                <td onclick="event.stopPropagation();">
+                    <div class="action-buttons">
+                        <button class="btn btn-action btn-increment" onclick="inventoryApp.incrementQuantity('${item.id}')" title="Increase quantity">
+                            +
+                        </button>
+                        <button class="btn btn-action btn-decrement" onclick="inventoryApp.decrementQuantity('${item.id}')" title="Decrease quantity" ${item.quantity === 0 ? 'disabled' : ''}>
+                            −
+                        </button>
                     </div>
-                </div>
-                <div class="item-details">
-                    <div class="item-detail">
-                        <strong>Location:</strong>
-                        <span>${this.escapeHtml(item.location)}</span>
-                    </div>
-                    <div class="item-detail">
-                        <strong>Quantity:</strong>
-                        <span>${item.quantity}</span>
-                    </div>
-                    ${item.barcode ? `
-                        <div class="item-detail">
-                            <strong>Barcode:</strong>
-                            <span>${this.escapeHtml(item.barcode)}</span>
-                        </div>
-                    ` : ''}
-                    <div class="item-detail">
-                        <strong>Added:</strong>
-                        <span>${this.formatDate(item.dateAdded)}</span>
-                    </div>
-                </div>
-                ${item.notes ? `
-                    <div class="item-notes">
-                        <strong>Notes:</strong> ${this.escapeHtml(item.notes)}
-                    </div>
-                ` : ''}
-                <button class="btn btn-danger" onclick="inventoryApp.removeItem('${item.id}')">
-                    Remove Item
-                </button>
-            </div>
+                </td>
+            </tr>
         `).join('');
     }
 
@@ -251,6 +395,12 @@ class InventoryManager {
     // Reset form after adding item
     resetForm() {
         document.getElementById('addItemForm').reset();
+        this.editingItemId = null;
+        const submitBtn = document.querySelector('.btn-primary');
+        const cancelBtn = document.getElementById('cancelBtn');
+        submitBtn.textContent = 'Add Item';
+        submitBtn.style.background = '';
+        cancelBtn.style.display = 'none';
     }
 
     // Format date for display

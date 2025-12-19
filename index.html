@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Home Inventory Manager</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=2">
 </head>
 <body>
     <div class="container">
@@ -14,8 +14,13 @@
         </header>
 
         <div class="add-item-section">
-            <h2>Add New Item</h2>
-            <form id="addItemForm">
+            <div class="section-header">
+                <h2>Add/Update Item</h2>
+                <button type="button" class="collapse-btn" id="collapseBtn" aria-label="Toggle section">
+                    <span class="collapse-icon">−</span>
+                </button>
+            </div>
+            <form id="addItemForm" class="collapsible-content">
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="itemName">Item Name *</label>
@@ -79,7 +84,10 @@
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary">Add Item</button>
+                <div class="form-buttons">
+                    <button type="submit" class="btn btn-primary">Add Item</button>
+                    <button type="button" id="cancelBtn" class="btn btn-secondary" style="display: none;">Cancel</button>
+                </div>
             </form>
         </div>
 
@@ -110,12 +118,28 @@
 
             <div id="itemCount" class="item-count">Total items: 0</div>
 
-            <div id="inventoryList" class="inventory-list">
-                <!-- Items will be dynamically added here -->
+            <div class="table-container">
+                <table id="inventoryTable" class="inventory-table">
+                    <thead>
+                        <tr>
+                            <th data-sort="name" class="sortable">Item Name <span class="sort-icon">↕</span></th>
+                            <th data-sort="category" class="sortable">Category <span class="sort-icon">↕</span></th>
+                            <th data-sort="location" class="sortable">Location <span class="sort-icon">↕</span></th>
+                            <th data-sort="barcode" class="sortable">Barcode <span class="sort-icon">↕</span></th>
+                            <th data-sort="notes">Notes</th>
+                            <th data-sort="dateAdded" class="sortable">Date Added <span class="sort-icon">↕</span></th>
+                            <th data-sort="quantity" class="sortable">Quantity <span class="sort-icon">↕</span></th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventoryList">
+                        <!-- Items will be dynamically added here -->
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <script src="script.js?v=2"></script>
 </body>
 </html>
