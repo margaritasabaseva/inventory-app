@@ -14,8 +14,13 @@
         </header>
 
         <div class="add-item-section">
-            <h2>Add New Item</h2>
-            <form id="addItemForm">
+            <div class="section-header">
+                <h2>Add/Update Item</h2>
+                <button type="button" class="collapse-btn" id="collapseBtn" aria-label="Toggle section">
+                    <span class="collapse-icon">−</span>
+                </button>
+            </div>
+            <form id="addItemForm" class="collapsible-content">
                 <div class="form-grid">
                     <div class="form-group">
                         <label for="itemName">Item Name *</label>

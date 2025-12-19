@@ -46,7 +46,61 @@ header p {
 
 .add-item-section h2 {
     color: #333;
+    margin-bottom: 0;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 20px;
+}
+
+.collapse-btn {
+    background: #667eea;
+    color: white;
+    border: none;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 24px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    padding: 0;
+}
+
+.collapse-btn:hover {
+    background: #5568d3;
+    transform: scale(1.1);
+}
+
+.collapse-btn:active {
+    transform: scale(0.95);
+}
+
+.collapse-icon {
+    display: inline-block;
+    transition: transform 0.3s ease;
+}
+
+.collapse-btn.collapsed .collapse-icon {
+    transform: rotate(90deg);
+}
+
+.collapsible-content {
+    max-height: 2000px;
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.3s ease;
+    opacity: 1;
+}
+
+.collapsible-content.collapsed {
+    max-height: 0;
+    opacity: 0;
 }
 
 .form-grid {

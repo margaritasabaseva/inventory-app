@@ -5,8 +5,24 @@ class InventoryManager {
         this.sortColumn = null;
         this.sortDirection = 'asc';
         this.editingItemId = null;
+        this.initializeCollapse();
         this.initializeEventListeners();
         this.displayItems();
+    }
+
+    // Initialize collapse functionality
+    initializeCollapse() {
+        const collapseBtn = document.getElementById('collapseBtn');
+        const collapsibleContent = document.querySelector('.collapsible-content');
+        
+        collapseBtn.addEventListener('click', () => {
+            collapseBtn.classList.toggle('collapsed');
+            collapsibleContent.classList.toggle('collapsed');
+            
+            // Update aria-label for accessibility
+            const isCollapsed = collapseBtn.classList.contains('collapsed');
+            collapseBtn.setAttribute('aria-label', isCollapsed ? 'Expand section' : 'Collapse section');
+        });
     }
 
     // Load items from localStorage
@@ -235,6 +251,16 @@ class InventoryManager {
     editItem(id) {
         const item = this.items.find(item => item.id === id);
         if (item) {
+            // Expand the form section if it's collapsed
+            const collapseBtn = document.getElementById('collapseBtn');
+            const collapsibleContent = document.querySelector('.collapsible-content');
+            
+            if (collapsibleContent.classList.contains('collapsed')) {
+                collapseBtn.classList.remove('collapsed');
+                collapsibleContent.classList.remove('collapsed');
+                collapseBtn.setAttribute('aria-label', 'Collapse section');
+            }
+            
             this.editingItemId = id;
             document.getElementById('itemName').value = item.name;
             document.getElementById('category').value = item.category;
